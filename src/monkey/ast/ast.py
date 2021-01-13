@@ -45,6 +45,11 @@ class IntegerLiteral(Expression):
     def __init__(self, value: int) -> None:
         self.value = value
 
+class StringLiteral(Expression):
+    node_type: str = "StringLiteral"
+    def __init__(self, value: str) -> None:
+        self.value: str = value
+
 class Boolean(Expression):
     node_type: str = "Boolean"
     def __init__(self, value: bool) -> None:

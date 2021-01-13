@@ -237,11 +237,11 @@ class Lexer:
         """
         buffer = ""
         if self.current_char == '"':
-            buffer += self.current_char
+            # buffer += self.current_char
             self._advance()
         while self.current_char is not None:
             if self.current_char == '"':
-                buffer += self.current_char
+                # buffer += self.current_char
                 self._advance()
                 break
             buffer += self.current_char

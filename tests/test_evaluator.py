@@ -22,6 +22,10 @@ def assert_boolean(boolean_obj: mobjects.Object, target):
     assert isinstance(boolean_obj, mobjects.Boolean)
     assert boolean_obj.value == target
 
+def assert_string(string_obj: mobjects.Object, target):
+    assert isinstance(string_obj, mobjects.String)
+    assert string_obj.value == target
+
 def assert_null(null_obj: mobjects.Object):
     assert isinstance(null_obj, mobjects.Null)
 
@@ -154,3 +158,14 @@ def test_functions():
     for src, target in test_cases:
         result = run_eval(src)
         assert_integer(result, target)
+
+def test_string():
+    test_cases = [
+        ('"STR"', "STR"),
+        ('"strings!!!"', "strings!!!"),
+        ('"String" + " " + "Concatenation"', "String Concatenation"),
+        ('"Black" + "" + "Magic"', "BlackMagic"),
+    ]
+    for src, target in test_cases:
+        result = run_eval(src)
+        assert_string(result, target)

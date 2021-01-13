@@ -153,6 +153,7 @@ class Parser:
     def _register_prefixes(self) -> None:
         self._register_prefix(TOKEN_TYPES.IDENTIFIER, self.p_identifier)
         self._register_prefix(TOKEN_TYPES.INTEGER, self.p_integer_literal)
+        self._register_prefix(TOKEN_TYPES.STRING, self.p_string_literal)
         self._register_prefix(TOKEN_TYPES.TRUE, self.p_boolean)
         self._register_prefix(TOKEN_TYPES.FALSE, self.p_boolean)
         self._register_prefix(TOKEN_TYPES.NOT, self.p_prefix_expression)
@@ -178,6 +179,9 @@ class Parser:
     def p_integer_literal(self) -> ast.IntegerLiteral:
         return ast.IntegerLiteral(self.current_token.value)
     
+    def p_string_literal(self) -> ast.StringLiteral:
+        return ast.StringLiteral(self.current_token.value)
+
     def p_boolean(self) -> ast.Boolean:
         if self._iscurrenttoken(TOKEN_TYPES.TRUE):
             value = True

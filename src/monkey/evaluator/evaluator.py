@@ -6,6 +6,7 @@ import operator as py_operator
 from monkey.ast import ast
 from monkey.evaluator import mobjects
 from monkey.evaluator.environment import Environment
+from monkey.evaluator.builtins import builtins
 
 TRUE = mobjects.Boolean(True)
 FALSE = mobjects.Boolean(False)
@@ -52,9 +53,12 @@ def m_is_true(value_obj: mobjects.Object) -> bool:
 def m_eval_identifier(node: ast.Identifier, env: Environment) -> mobjects.Object:
     """evaluate a identifier."""
     value = env.get(node.name)
-    if value is None:
-        return m_error(f"name '{node.name}' is not defined")
-    return value
+    if value is not None:
+        return value
+    value = builtins.get(node.name)
+    if value is not None:
+        return value
+    return m_error(f"name '{node.name}' is not defined")
 
 def m_eval_not_operator(right: mobjects.Object) -> mobjects.Boolean:
     """evaluate boolean not operator
@@ -123,6 +127,27 @@ def m_eval_infix_integer_expression(
         return construct_boolean(func(left.value, right.value))
     return m_error(f"unknown infix operator {operator}: {left}{operator}{right}")
 
+def m_eval_infix_string_expression(
+        left: mobjects.String, operator: str,
+        right: mobjects.String) -> mobjects.Object:
+    """Evaluate string operators
+    
+    Args:
+        left: lhs of the expression
+        operator: "+", "==" or "!="
+        right: rhs of the expression
+    Returns:
+        returns error if given operator is not one of the
+        above mentioned otherwise returns the evaluated result. 
+    """
+    if operator == "+":
+        return mobjects.String(left.value + right.value)
+    elif operator == "==":
+        return construct_boolean(left.value == right.value)
+    elif operator == "!=":
+        return construct_boolean(left.value != right.value)
+    return m_error(f"unsupported operand type for {operator}: 'STRING' and 'STRING'")
+
 def m_eval_infix_expression(
         left: mobjects.Object, operator: str, 
         right: mobjects.Object) -> mobjects.Object:
@@ -137,11 +162,12 @@ def m_eval_infix_expression(
     """
     if m_is_type(left, mobjects.INTEGER_OBJ) and m_is_type(right, mobjects.INTEGER_OBJ):
         return m_eval_infix_integer_expression(left, operator, right)
+    elif m_is_type(left, mobjects.STRING_OBJ) and m_is_type(right, mobjects.STRING_OBJ):
+        return m_eval_infix_string_expression(left, operator, right)
     elif operator == "==":
         return construct_boolean(left == right)
     elif operator == "!=":
         return construct_boolean(left != right)
-
     return m_error(f"unsupported operand type for {operator}: '{left.type()}' and '{right.type()}'")
 
 def m_eval_if_expression(node: ast.IfExpression, env: Environment) -> mobjects.Object:
@@ -178,6 +204,8 @@ def m_eval_call_expression(
     Returns:
         returns the result of function call.
     """
+    if m_is_type(function, mobjects.BUILTIN_OBJ):
+        return function.function(*args)
     if not m_is_type(function, mobjects.FUNCTION_OBJ):
         return m_error(f"{function.type()} is not callable")
     if len(function.parameters) != len(args):
@@ -322,4 +350,6 @@ def m_eval(node: ast.Node, env: Environment) -> mobjects.Object:
         return mobjects.Integer(node.value)
     elif isinstance(node, ast.Boolean):
         return construct_boolean(node.value)
+    elif isinstance(node, ast.StringLiteral):
+        return mobjects.String(value=node.value)
     return NULL

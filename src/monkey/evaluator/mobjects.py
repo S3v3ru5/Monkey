@@ -2,10 +2,12 @@
 
 INTEGER_OBJ = "INTEGER"
 BOOLEAN_OBJ = "BOOLEAN"
+STRING_OBJ = "STRING"
 NULL_OBJ = "NULL"
 RETURN_VALUE_OBJ = "RETURN_VAL"
 ERROR_OBJ = "ERROR"
 FUNCTION_OBJ = "FUNCTION"
+BUILTIN_OBJ = "BUILTIN"
 
 class Object():
     def __init__(self):
@@ -33,6 +35,19 @@ class Boolean(Object):
 
     def __str__(self):
         return "true" if self.value else "false"
+    
+    def __repr__(self):
+        return self.__str__()
+
+class String(Object):
+    def __init__(self, value: str = None):
+        self.value: bool = value
+    
+    def type(self):
+        return STRING_OBJ
+    
+    def __str__(self):
+        return self.value
     
     def __repr__(self):
         return self.__str__()
@@ -94,3 +109,15 @@ class Function(Object):
     def __repr__(self):
         return self.__str__()
 
+class Builtin(Object):
+    def __init__(self, function):
+        self.function = function
+    
+    def type(self):
+        return BUILTIN_OBJ
+    
+    def __str__(self):
+        return "<built-in function>"
+    
+    def __repr__(self):
+        return self.__str__()
