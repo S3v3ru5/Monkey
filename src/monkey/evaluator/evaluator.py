@@ -193,6 +193,30 @@ def m_eval_if_expression(node: ast.IfExpression, env: Environment) -> mobjects.O
         return m_eval(node.alternative, env)
     return NULL
 
+def m_eval_array_index(left: mobjects.Array, index: mobjects.Integer) -> mobjects.Object:
+    index = index.value
+    if index < 0:
+        return m_error("negative indexes are not supported")
+        # return NULL
+    if not index < len(left.elements):
+        return m_error(f"array index({index}) out of range")
+        # return NULL
+    return left.elements[index]
+
+def m_eval_index_expression(left: mobjects.Object, index: mobjects.Object) -> mobjects.Object:
+    """evaluate index expression.
+
+       returns NULL instead of raising error when index is out of bounds.
+    Args:
+        left: Object to access from.
+        index: index of the element to acess.
+    Returns:
+        value at index if index is in range of array len else NULL.
+    """
+    if m_is_type(left, mobjects.ARRAY_OBJ) and m_is_type(index, mobjects.INTEGER_OBJ):
+        return m_eval_array_index(left, index)
+    return m_error(f"{left.type()} is not subscriptable")
+
 def m_eval_call_expression(
             function: mobjects.Object,
             args: List[mobjects.Object]) -> mobjects.Object:
@@ -308,6 +332,7 @@ def m_eval(node: ast.Node, env: Environment) -> mobjects.Object:
             return value
         name = node.identifier.name
         env.set(name, value)
+        return NULL
     elif isinstance(node, ast.ReturnStatement):
         value = m_eval(node.expression, env)
         if m_is_error(value):
@@ -332,6 +357,14 @@ def m_eval(node: ast.Node, env: Environment) -> mobjects.Object:
         return m_eval_infix_expression(left, node.operator, right)
     elif isinstance(node, ast.IfExpression):
         return m_eval_if_expression(node, env)
+    elif isinstance(node, ast.IndexExpression):
+        left = m_eval(node.left, env)
+        if m_is_error(left):
+            return left
+        index = m_eval(node.index, env)
+        if m_is_error(index):
+            return index
+        return m_eval_index_expression(left, index)
     elif isinstance(node, ast.CallExpression):
         function = m_eval(node.function, env)
         if m_is_error(function):
@@ -344,6 +377,11 @@ def m_eval(node: ast.Node, env: Environment) -> mobjects.Object:
         parameters = node.parameters
         body = node.body
         return mobjects.Function(parameters, body, env)
+    elif isinstance(node, ast.ArrayLiteral):
+        elements, error = m_eval_expressions(node.elements, env)
+        if error is not None:
+            return error
+        return mobjects.Array(elements)
     elif isinstance(node, ast.Identifier):
         return m_eval_identifier(node, env)
     elif isinstance(node, ast.IntegerLiteral):

@@ -14,6 +14,7 @@ PRECEDENCE_ORDERS = {
     "PRODUCT": 5,
     "PREFIX": 6,
     "CALL": 7,
+    "INDEX": 8,
 }
 
 PRECEDENCE_ORDERS = SimpleNamespace(**PRECEDENCE_ORDERS)
@@ -28,6 +29,7 @@ PRECEDENCES = {
     TOKEN_TYPES.MUL:            PRECEDENCE_ORDERS.PRODUCT,
     TOKEN_TYPES.DIV:            PRECEDENCE_ORDERS.PRODUCT,
     TOKEN_TYPES.LPAREN:         PRECEDENCE_ORDERS.CALL,
+    TOKEN_TYPES.LBRACKET:       PRECEDENCE_ORDERS.INDEX,
 }
 
 class Parser:
@@ -159,6 +161,7 @@ class Parser:
         self._register_prefix(TOKEN_TYPES.NOT, self.p_prefix_expression)
         self._register_prefix(TOKEN_TYPES.MINUS, self.p_prefix_expression)
         self._register_prefix(TOKEN_TYPES.LPAREN, self.p_grouped_expression)
+        self._register_prefix(TOKEN_TYPES.LBRACKET, self.p_array_literal)
         self._register_prefix(TOKEN_TYPES.IF, self.p_if_expression)
         self._register_prefix(TOKEN_TYPES.FUNCTION, self.p_function_literal)
 
@@ -172,6 +175,7 @@ class Parser:
         self._register_infix(TOKEN_TYPES.LESSTHAN, self.p_infix_expression)
         self._register_infix(TOKEN_TYPES.GREATERTHAN, self.p_infix_expression)
         self._register_infix(TOKEN_TYPES.LPAREN, self.p_call_expression)
+        self._register_infix(TOKEN_TYPES.LBRACKET, self.p_index_expression)
 
     def p_identifier(self) -> ast.Identifier:
         return ast.Identifier(self.current_token.value)
@@ -191,6 +195,14 @@ class Parser:
             self._error(f"Unknow boolean value {self.current_token}")
             value = None
         return ast.Boolean(value)
+
+    def p_array_literal(self) -> ast.ArrayLiteral:
+        """parse arrays.
+
+        arrays :: "[" <expression>, <expression>, ..."]"
+        """
+        elements = self.p_expression_list(TOKEN_TYPES.RBRACKET)
+        return ast.ArrayLiteral(elements)
 
     def p_prefix_expression(self) -> ast.PrefixExpression:
         """parse prefix expressions(unary).
@@ -265,10 +277,23 @@ class Parser:
         
         return ast.IfExpression(condition, consequence, alternative)
 
-    def p_call_arguments(self):
+    def p_index_expression(self, left) -> ast.IndexExpression:
+        """parse an index expression.
+
+        IndexExpression :: <expression> "[" <expression> "]"
+        """
+        self._advance()
+        index = self.p_expression(PRECEDENCE_ORDERS.LOWEST)
+        self._advance()
+        if not self._iscurrenttoken(TOKEN_TYPES.RBRACKET):
+            self._error("Index expression is not closed")
+        return ast.IndexExpression(left, index)
+
+    def p_expression_list(self, end_marker):
+        """parse comma separated expressions until end_marker."""
         args = []
         self._advance()
-        if self._iscurrenttoken(TOKEN_TYPES.RPAREN):
+        if self._iscurrenttoken(end_marker):
             return args
         expression = self.p_expression(PRECEDENCE_ORDERS.LOWEST)
         self._advance()
@@ -278,9 +303,12 @@ class Parser:
             expression = self.p_expression(PRECEDENCE_ORDERS.LOWEST)
             self._advance()
             args.append(expression)
-        if not self._iscurrenttoken(TOKEN_TYPES.RPAREN):
-            self._error("Paranthesis not closed in call expression")
+        if not self._iscurrenttoken(end_marker):
+            self._error(f"expression is not closed by {end_marker}")
         return args
+
+    def p_call_arguments(self):
+        return self.p_expression_list(TOKEN_TYPES.RPAREN)
 
     def p_call_expression(self, function) -> ast.CallExpression:
         """parse a call expression(function calling).

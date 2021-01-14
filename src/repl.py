@@ -19,8 +19,9 @@ def run():
             print(p.errors)
             continue
         result = m_eval(program, env)
+        # if result is not None:
+        #     print(result)
         if not result.type() == "NULL":
             print(result)
-
 if __name__ == "__main__":
     run()

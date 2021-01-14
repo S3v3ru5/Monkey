@@ -8,6 +8,7 @@ RETURN_VALUE_OBJ = "RETURN_VAL"
 ERROR_OBJ = "ERROR"
 FUNCTION_OBJ = "FUNCTION"
 BUILTIN_OBJ = "BUILTIN"
+ARRAY_OBJ = "ARRAY"
 
 class Object():
     def __init__(self):
@@ -86,7 +87,7 @@ class Error(Object):
         return ERROR_OBJ
 
     def __str__(self):
-        return f"Error: {self.msg}"
+        return f"ERROR: {self.msg}"
     
     def __repr__(self):
         return self.__str__()
@@ -101,10 +102,7 @@ class Function(Object):
         return FUNCTION_OBJ
     
     def __str__(self):
-        s = "fn ("
-        s += ", ".join(str(param) for param in self.parameters)
-        s += ")"
-        return s
+        return "<function>"
     
     def __repr__(self):
         return self.__str__()
@@ -118,6 +116,19 @@ class Builtin(Object):
     
     def __str__(self):
         return "<built-in function>"
+    
+    def __repr__(self):
+        return self.__str__()
+
+class Array(Object):
+    def __init__(self, elements):
+        self.elements = elements
+
+    def type(self):
+        return ARRAY_OBJ
+    
+    def __str__(self):
+        return "[" + ", ".join(str(element) for element in self.elements) + "]"
     
     def __repr__(self):
         return self.__str__()

@@ -169,3 +169,13 @@ def test_string():
     for src, target in test_cases:
         result = run_eval(src)
         assert_string(result, target)
+
+def test_array():
+    test_cases = [
+        ("let a = [1, 2]; a[1];", 2),
+        ("let a = [1*3, 2+3]; a[1]", 5),
+        ("let a = [1, 2]; a[1*2 - 2 + 1];", 2)
+    ]
+    for src, target in test_cases:
+        result = run_eval(src)
+        assert_integer(result, target)

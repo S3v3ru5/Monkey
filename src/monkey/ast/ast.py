@@ -50,6 +50,11 @@ class StringLiteral(Expression):
     def __init__(self, value: str) -> None:
         self.value: str = value
 
+class ArrayLiteral(Expression):
+    node_type: str = "ArrayLiteral"
+    def __init__(self, elements):
+        self.elements = elements
+
 class Boolean(Expression):
     node_type: str = "Boolean"
     def __init__(self, value: bool) -> None:
@@ -80,6 +85,12 @@ class IfExpression(Expression):
         self.consequence = consequence
         self.alternative = alternative
 
+class IndexExpression(Expression):
+    node_type: str = "IndexExpression"
+    def __init__(self, left, index):
+        self.left = left
+        self.index = index
+
 class FunctionLiteral(Expression):
     node_type: str = "FunctionLiteral"
     def __init__(self, parameters, body):
@@ -91,3 +102,4 @@ class CallExpression(Expression):
     def __init__(self, function, arguments):
         self.function = function
         self.arguments = arguments
+
