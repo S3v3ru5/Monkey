@@ -47,8 +47,27 @@ def m_append(*args) -> mobjects.Object:
     array.elements.append(value)
     return evaluator.NULL
 
+def m_input(*args) -> mobjects.Object:
+    if len(args) > 1:
+        return m_error(f"input takes atmost one argument ({len(args)} given)")
+    print(*args, end="")
+    value = input()
+    try:
+        return mobjects.Integer(int(value))
+    except ValueError:
+        return m_error(f"invalid literal for integer: '{value}'")
+
+def m_raw_input(*args) -> mobjects.Object:
+    if len(args) > 1:
+        return m_error(f"raw_input takes atmost ")
+    print(*args, end="")
+    value = input()
+    return mobjects.String(value)
+
 builtins = {
     "len": mobjects.Builtin(m_len),
     "puts": mobjects.Builtin(m_puts),
-    "append": mobjects.Builtin(m_append)
+    "append": mobjects.Builtin(m_append),
+    "input": mobjects.Builtin(m_input),
+    "raw_input": mobjects.Builtin(m_raw_input),
 }

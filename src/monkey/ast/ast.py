@@ -103,3 +103,7 @@ class CallExpression(Expression):
         self.function = function
         self.arguments = arguments
 
+class HashLiteral(Expression):
+    node_type: str = "HashLiteral"
+    def __init__(self, pairs):
+        self.pairs = pairs

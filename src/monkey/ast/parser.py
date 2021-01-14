@@ -162,6 +162,7 @@ class Parser:
         self._register_prefix(TOKEN_TYPES.MINUS, self.p_prefix_expression)
         self._register_prefix(TOKEN_TYPES.LPAREN, self.p_grouped_expression)
         self._register_prefix(TOKEN_TYPES.LBRACKET, self.p_array_literal)
+        self._register_prefix(TOKEN_TYPES.LBRACE, self.p_hash_literal)
         self._register_prefix(TOKEN_TYPES.IF, self.p_if_expression)
         self._register_prefix(TOKEN_TYPES.FUNCTION, self.p_function_literal)
 
@@ -203,6 +204,26 @@ class Parser:
         """
         elements = self.p_expression_list(TOKEN_TYPES.RBRACKET)
         return ast.ArrayLiteral(elements)
+    
+    def p_hash_literal(self) -> ast.HashLiteral:
+        """parse hash maps(dictionaries).
+
+        HashLiteral :: "{" <expression> ":" <expression> "," ... "}"
+        """
+        pairs = dict()
+        self._advance()
+        while self._iscurrenttoken(TOKEN_TYPES.COMMA):
+            key = self.p_expression(PRECEDENCE_ORDERS.LOWEST)
+            self._advance()
+            if not self._iscurrenttoken(TOKEN_TYPES.SEMICOLON):
+                return None
+            self._advance()
+            value = self.p_expression(PRECEDENCE_ORDERS.LOWEST)
+            self._advance()
+            pairs[key] = value
+        if not self._iscurrenttoken(TOKEN_TYPES.RBRACE):
+            return None
+        return ast.HashLiteral(pairs)
 
     def p_prefix_expression(self) -> ast.PrefixExpression:
         """parse prefix expressions(unary).

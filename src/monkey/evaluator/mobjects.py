@@ -14,12 +14,30 @@ class Object():
     def __init__(self):
         pass
 
+# class HashKey():
+#     def __init__(self, type, value):
+#         self.type = type
+#         self.value = value
+    
+#     def __eq__(self, other):
+#         if not isinstance(other, HashKey):
+#             return False
+#         if self.type == other.type and self.value == other.value:
+#             return True
+#         return False
+    
+#     def __hash__(self):
+#         return str(self.type) + str(self.value)
+
 class Integer(Object):
     def __init__(self, value: int = None):
         self.value:int = value
     
     def type(self):
         return INTEGER_OBJ
+
+    # def hash(self):
+    #     return HashKey(type = self.type(), value=self.value)
 
     def __str__(self):
         return str(self.value)
@@ -34,6 +52,9 @@ class Boolean(Object):
     def type(self):
         return BOOLEAN_OBJ
 
+    # def hash(self):
+    #     return HashKey(type=self.type(), value=int(self.value))
+
     def __str__(self):
         return "true" if self.value else "false"
     
@@ -47,6 +68,9 @@ class String(Object):
     def type(self):
         return STRING_OBJ
     
+    # def hash(self):
+    #     return HashKey(type=self.type(), value=self.value.__hash__)
+
     def __str__(self):
         return self.value
     
