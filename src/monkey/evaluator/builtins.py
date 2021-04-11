@@ -10,9 +10,11 @@ def m_error(msg) -> mobjects.Error:
 def m_len(*args) -> mobjects.Object:
     if len(args) != 1:
         return m_error(f"len takes exactly one argument ({len(args)} given)")
-    if not isinstance(args[0], mobjects.String):
-        return m_error(f"object of type {args[0].type()} has no len()")
-    return mobjects.Integer(value=len(args[0].value))
+    if isinstance(args[0], mobjects.String):
+        return mobjects.Integer(value=len(args[0].value))
+    if isinstance(args[0], mobjects.Array):
+        return mobjects.Integer(value=len(args[0].elements))
+    return m_error(f"object of type {args[0].type()} has no len()")
 
 def m_puts(*args) -> mobjects.Object:
     # supported_types = [

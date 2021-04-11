@@ -69,12 +69,12 @@ class Parser:
         return PRECEDENCES.get(self.current_token.type, PRECEDENCE_ORDERS.LOWEST)
 
     def _error(self, msg = None):
-        """generic method to call for any error."""
+        """method to call to raise an error."""
         if msg is None:
-            # raise Exception(f"Syntax Error {self.current_token}")
-            self.errors.append(f"Syntax Error {self.current_token}")
-        # raise Exception(msg)
-        self.errors.append(msg)
+            raise Exception(f"Syntax Error: {self.current_token}")
+            # self.errors.append(f"Syntax Error {self.current_token}")
+        raise Exception("ERROR: " + msg)
+        # self.errors.append(msg)
 
     def _eat(self, token_type):
         """verify current token type.
@@ -93,7 +93,7 @@ class Parser:
         let <identifier> = <expression>;
 
         Returns:
-            reference to parent node of let subtree.
+            reference to root node of let subtree.
         """
         self._eat(TOKEN_TYPES.LET)
         var_name = self.current_token.value
@@ -137,7 +137,7 @@ class Parser:
     def p_statement(self) -> ast.Statement:
         """parse a statement.
 
-        Let statements, return statements, expression statement.
+        let statements, return statements, expression statement.
         """
         if self._iscurrenttoken(TOKEN_TYPES.LET):
             return self.p_let_statement()

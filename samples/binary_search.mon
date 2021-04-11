@@ -1,0 +1,29 @@
+
+
+let binary_search = fn(arr, n, low, high){
+    let c = 0;
+    if (!(low > high)) {
+        let mid = (high + low) / 2
+
+        if (arr[mid] == n){
+            return mid;
+        }
+        if (arr[mid] > n){
+            return binary_search(arr, n, low, mid - 1);
+        }
+        else {
+            return binary_search(arr, n, mid + 1, high);
+        }
+    }
+    else {
+        return -1;
+    }
+}
+
+let arr = [1, 2, 3, 4, 5, 6, 7];
+
+puts("binary search on arr", arr, ":")
+puts("----------------------------------------")
+
+let n = input("enter n: ");
+puts("index =", binary_search(arr, n, 0, len(arr) - 1))

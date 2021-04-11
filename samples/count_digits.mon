@@ -1,0 +1,15 @@
+
+let ndigits = fn(n) {
+    if (n != 0) {
+        return ndigits(n / 10) + 1;
+    }
+    return 0;
+}
+
+puts("count number of digits in given number :")
+puts("----------------------------------------")
+
+let n = input("enter n: ");
+
+let result = ndigits(n);
+puts("number of digits in", n, "are", result)
