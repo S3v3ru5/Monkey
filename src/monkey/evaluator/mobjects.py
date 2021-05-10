@@ -63,7 +63,7 @@ class Boolean(Object):
 
 class String(Object):
     def __init__(self, value: str = None):
-        self.value: bool = value
+        self.value: str = value
     
     def type(self):
         return STRING_OBJ

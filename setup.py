@@ -4,7 +4,7 @@ setup(
     name="monkey",
     packages = find_packages(
         where="src",
-        include=["monkey"]
+        include=["monkey", "monkey.*"]
     ),
     package_dir={"": "src"},
     entry_points={

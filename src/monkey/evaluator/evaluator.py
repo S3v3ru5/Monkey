@@ -31,7 +31,7 @@ def m_is_error(obj: mobjects.Object) -> bool:
     return m_is_type(obj, mobjects.ERROR_OBJ)
 
 def m_is_true(value_obj: mobjects.Object) -> bool:
-    """determine whether an value/object evals to true.
+    """determine whether an value/object evaluates to true.
 
     Check whether the given value is considered true or not.
     Integer values are considered true for all values other than zero.
@@ -125,7 +125,7 @@ def m_eval_infix_integer_expression(
     }.get(operator)
     if func is not None:
         return construct_boolean(func(left.value, right.value))
-    return m_error(f"unknown infix operator {operator}: {left}{operator}{right}")
+    return m_error(f"unknown infix operator {operator}: {left} {operator} {right}")
 
 def m_eval_infix_string_expression(
         left: mobjects.String, operator: str,
@@ -197,21 +197,20 @@ def m_eval_array_index(left: mobjects.Array, index: mobjects.Integer) -> mobject
     index = index.value
     if index < 0:
         return m_error("negative indexes are not supported")
-        # return NULL
     if not index < len(left.elements):
         return m_error(f"array index({index}) out of range")
-        # return NULL
     return left.elements[index]
 
 def m_eval_index_expression(left: mobjects.Object, index: mobjects.Object) -> mobjects.Object:
     """evaluate index expression.
 
-       returns NULL instead of raising error when index is out of bounds.
     Args:
         left: Object to access from.
         index: index of the element to acess.
     Returns:
-        value at index if index is in range of array len else NULL.
+        value at index if index is in range of array len.
+        returns error object if index is out of bounds or 
+        index is negative. 
     """
     if m_is_type(left, mobjects.ARRAY_OBJ) and m_is_type(index, mobjects.INTEGER_OBJ):
         return m_eval_array_index(left, index)
@@ -234,7 +233,7 @@ def m_eval_call_expression(
         return m_error(f"{function.type()} is not callable")
     if len(function.parameters) != len(args):
         msg = f"function expected {len(function.parameters)} arguments but"
-        msg += f"{len(args)} were given"
+        msg += f" {len(args)} were given"
         return m_error(msg)
     extended_env = Environment(outer=function.env)
     for ind, parameter in enumerate(function.parameters):

@@ -193,7 +193,7 @@ class Parser:
         elif self._iscurrenttoken(TOKEN_TYPES.FALSE):
             value = False
         else:
-            self._error(f"Unknow boolean value {self.current_token}")
+            self._error(f"Unknown boolean value {self.current_token}")
             value = None
         return ast.Boolean(value)
 

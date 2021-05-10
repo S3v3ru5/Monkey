@@ -2,19 +2,9 @@
 
 from typing import List, Type
 
-# from monkey.lexer.token import Token
-# from monkey.lexer.token_types import token_types, is_keyword
-
+from monkey.exceptions import LexicalError
 from monkey.lexer.token import Token
 from monkey.lexer.token_types import token_types, look_up_identifier
-
-class UnknownTokenError(Exception):
-    """Error class for Unrecognised Tokens"""
-    pass
-
-class SyntaxError(Exception):
-    """class for Syntax Errors"""
-    pass
 
 class Lexer:
     """A class for lexical analysis"""
@@ -78,11 +68,14 @@ class Lexer:
         
         Returns:
             Token with recognised lexeme.
+        Raises:
+            raises LexicalError if current char is not a valid lexeme. 
         """
         self._skip_whitespace()
 
         if self.current_char is None:
             return Token(token_types.EOF, "")
+
         # Literals
         if self.current_char.isdigit():
             return self._recognise_integer()
@@ -90,6 +83,7 @@ class Lexer:
             return self._recognise_identifier()
         if self.current_char == '"':
             return self._recognise_string()
+
         # Arthimetic Operators
         tmp_token = None
         if self.current_char == "+":
@@ -104,6 +98,7 @@ class Lexer:
         if tmp_token is not None:
             self._advance()
             return tmp_token
+
         # Assignment operator and Equal operator
         if self.current_char == "=":
             buffer = self.current_char
@@ -115,6 +110,7 @@ class Lexer:
                 tmp_token = Token(token_types.ASSIGN, buffer)
             self._advance()        
             return tmp_token
+
         # Comparison operators
         tmp_token = None
         if self.current_char == "<":
@@ -132,6 +128,7 @@ class Lexer:
         if tmp_token is not None:
             self._advance()
             return tmp_token
+        
         # Delimeters
         tmp_token_type = {
             "(": token_types.LPAREN,
@@ -149,7 +146,7 @@ class Lexer:
             self._advance()
             return tmp_token
                      
-        raise UnknownTokenError(f"Unrecognised Token => {self.current_char}")
+        raise LexicalError(f"LexicalError: unrecognised token at or near {self.current_char}")
 
     def _recognise_integer(self) -> Type[Token]:
         """recognise integers.
@@ -163,7 +160,7 @@ class Lexer:
             returns INTEGER token with scanned value.
         
         Raises:
-            raises SyntaxError if any grammar rules are violated. 
+            raises LexicalError if any grammar rules are violated. 
         """
         buffer = ""
 
@@ -179,7 +176,12 @@ class Lexer:
                     self._advance()
                     if (self.current_char is None
                         or not self.current_char.isdigit()):
-                        raise SyntaxError("invalid integer lexeme")
+                        error_msg = f"invalid integer {buffer + '_'}\n"
+                        error_msg += "integers cannot end with '_',"
+                        error_msg += "'_' can only used in the middle as"
+                        error_msg += "visual separator.\n"
+                        error_msg += "LexicalError: Invalid integer literal"
+                        raise LexicalError(error_msg)
                     buffer += self.current_char
                     self._advance()
                 else:
@@ -193,11 +195,18 @@ class Lexer:
                     self._advance()
                     if (self.current_char is None
                         or not self.current_char == "0"):
-                        raise SyntaxError("invalid integer lexeme")
+                        error_msg = f"invalid integer literal {buffer + '_'}"
+                        raise LexicalError(f"LexicalError: {error_msg}")
                     self._advance()
                 else:
                     break
         
+        if (self.current_char is not None
+            and self.current_char.isalpha()):
+            error_msg = f"invalid identifier {buffer + self.current_char}\n"
+            error_msg = "identifiers cannot start with a number\n"
+            raise LexicalError(f"{error_msg}\nLexicalError: Invalid Identifier")
+
         return Token(token_types.INTEGER, int(buffer))
 
     def _recognise_identifier(self) -> Type[Token]:
@@ -237,11 +246,9 @@ class Lexer:
         """
         buffer = ""
         if self.current_char == '"':
-            # buffer += self.current_char
             self._advance()
         while self.current_char is not None:
             if self.current_char == '"':
-                # buffer += self.current_char
                 self._advance()
                 break
             buffer += self.current_char
