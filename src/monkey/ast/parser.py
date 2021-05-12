@@ -74,14 +74,17 @@ class Parser:
     def _error(self, msg = None):
         """method to call to raise an error."""
         if msg is None:
-            msg = f"invalid syntax at or near {self.current_token.value}"
+            msg = f"line {self.current_token.line}, col {self.current_token.column}: "
+            msg += f"invalid syntax at or near {self.current_token.value}"
             msg += f"\n\nSyntaxError: Invalid Syntax"
         raise SyntaxError(msg)
 
-    def _get_error_msg(self, expected, got, previous_token = None):
+    def _get_error_msg(self, expected, got, line, col, previous_token = None):
         if previous_token is None:
-            msg = f"expected a {expected}, instead got a {got}"
+            msg = f"line {line}, col {col}: "
+            msg += f"expected a {expected}, instead got a {got}"
         else:
+            msg = f"line {line}, col {col}: "
             msg = f"expected {expected} after {previous_token.value}, "
             msg += f"instead got {got}"
         msg += "\n\nSyntaxError: Invalid Syntax"
@@ -96,6 +99,8 @@ class Parser:
         if self.current_token.type != token_type:
             msg = self._get_error_msg(token_type,
                     self.current_token.type,
+                    self.current_token.line,
+                    self.current_token.column,
                     self.prev_token
                 )
             self._error(msg)
@@ -254,6 +259,8 @@ class Parser:
         if not self._ispeektoken(TOKEN_TYPES.RPAREN):
             msg = self._get_error_msg(TOKEN_TYPES.RPAREN,
                         self.peek_token.type,
+                        self.peek_token.line,
+                        self.peek_token.column,
                         self.current_token
                     )
             self._error(msg)
@@ -274,6 +281,8 @@ class Parser:
         if not self._iscurrenttoken(TOKEN_TYPES.LPAREN):
             msg = self._get_error_msg(TOKEN_TYPES.LPAREN,
                         self.current_token.type,
+                        self.current_token.line,
+                        self.current_token.column,
                         self.prev_token
                     )
             self._error(msg)
@@ -283,6 +292,8 @@ class Parser:
         if not self._ispeektoken(TOKEN_TYPES.RPAREN):
             msg = self._get_error_msg(TOKEN_TYPES.RPAREN,
                         self.peek_token.type,
+                        self.peek_token.line,
+                        self.peek_token.column,
                         self.current_token
                     )
             self._error(msg)
@@ -290,6 +301,8 @@ class Parser:
         if not self._ispeektoken(TOKEN_TYPES.LBRACE):
             msg = self._get_error_msg(TOKEN_TYPES.LBRACE,
                         self.peek_token.type,
+                        self.peek_token.line,
+                        self.peek_token.column,
                         self.current_token.value
                     )
             self._error(msg)
@@ -302,6 +315,8 @@ class Parser:
             if not self._ispeektoken(TOKEN_TYPES.LBRACE):
                 msg = self._get_error_msg(TOKEN_TYPES.LBRACE,
                             self.peek_token.type,
+                            self.peek_token.line,
+                            self.peek_token.column,
                             self.current_token.value
                         )
                 self._error(msg)
@@ -323,6 +338,8 @@ class Parser:
         if not self._iscurrenttoken(TOKEN_TYPES.RBRACKET):
             msg = self._get_error_msg(TOKEN_TYPES.RBRACKET,
                         self.current_token.type,
+                        self.current_token.line,
+                        self.current_token.column,
                         self.prev_token
                     )
             self._error(msg)
@@ -345,6 +362,8 @@ class Parser:
         if not self._iscurrenttoken(end_marker):
             msg = self._get_error_msg(end_marker,
                         self.current_token.type,
+                        self.current_token.line,
+                        self.current_token.column,
                         self.prev_token
                     )
             self._error(msg)
@@ -394,6 +413,8 @@ class Parser:
         if not self._iscurrenttoken(TOKEN_TYPES.LPAREN):
             msg = self._get_error_msg(TOKEN_TYPES.LPAREN,
                         self.current_token.type,
+                        self.current_token.line,
+                        self.current_token.column,
                         self.prev_token
                     )
             self._error(msg)
@@ -402,6 +423,8 @@ class Parser:
         if not self._iscurrenttoken(TOKEN_TYPES.LBRACE):
             msg = self._get_error_msg(TOKEN_TYPES.LBRACE,
                         self.current_token.type,
+                        self.current_token.line,
+                        self.current_token.column,
                         self.prev_token
                     )
             self._error(msg)

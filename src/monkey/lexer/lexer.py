@@ -18,6 +18,8 @@ class Lexer:
         self.input_len = len(self.input)
         self.current_char = None
         self.position = 0
+        self.current_line = 1
+        self.current_column = 0
 
         self._advance()
     
@@ -42,11 +44,15 @@ class Lexer:
             return
         self.current_char = self.input[self.position]
         self.position += 1
+        self.current_column += 1
 
     def _skip_whitespace(self) -> None:
         """skip whitespaces from the cursor position"""
         while (self.current_char is not None
             and self.current_char.isspace()):
+            if self.current_char == "\n":
+                self.current_line += 1
+                self.current_column = 0
             self._advance()
     
     def tokenize(self) -> List[Type[Token]]:
@@ -74,7 +80,7 @@ class Lexer:
         self._skip_whitespace()
 
         if self.current_char is None:
-            return Token(token_types.EOF, "EOF")
+            return Token(token_types.EOF, "EOF", self.current_line, self.current_column)
 
         # Literals
         if self.current_char.isdigit():
@@ -85,46 +91,58 @@ class Lexer:
             return self._recognise_string()
 
         # Arthimetic Operators
-        tmp_token = None
+        tmp_token_type = None
         if self.current_char == "+":
-            tmp_token = Token(token_types.PLUS, self.current_char)
+            tmp_token_type = token_types.PLUS
         elif self.current_char == "-":
-            tmp_token = Token(token_types.MINUS, self.current_char)
+            tmp_token_type = token_types.MINUS
         elif self.current_char == "*":
-            tmp_token = Token(token_types.MUL, self.current_char)
+            tmp_token_type = token_types.MUL
         elif self.current_char == "/":
-            tmp_token = Token(token_types.DIV, self.current_char)
+            tmp_token_type = token_types.DIV
         
-        if tmp_token is not None:
+        if tmp_token_type is not None:
+            operator = self.current_char
             self._advance()
-            return tmp_token
+            return Token(tmp_token_type, operator,
+                        self.current_line,
+                        self.current_column
+                    )
 
         # Assignment operator and Equal operator
         if self.current_char == "=":
+            line = self.current_line
+            column = self.current_column
             buffer = self.current_char
             if self._peek_char() == "=":
                 self._advance()
                 buffer += self.current_char
-                tmp_token = Token(token_types.EQUAL, buffer)
+                tmp_token = Token(token_types.EQUAL, buffer, line, column)
             else:
-                tmp_token = Token(token_types.ASSIGN, buffer)
-            self._advance()        
+                tmp_token = Token(token_types.ASSIGN, buffer, line, column)
+            self._advance()
             return tmp_token
 
         # Comparison operators
         tmp_token = None
         if self.current_char == "<":
-            tmp_token = Token(token_types.LESSTHAN, self.current_char)
+            tmp_token = Token(token_types.LESSTHAN, self.current_char,
+                        self.current_line, self.current_column
+                    )
         elif self.current_char == ">":
-            tmp_token = Token(token_types.GREATERTHAN, self.current_char)
+            tmp_token = Token(token_types.GREATERTHAN, self.current_char,
+                        self.current_line, self.current_column
+                    )
         elif self.current_char == "!":
             buffer = self.current_char
+            line = self.current_line
+            column = self.current_column
             if self._peek_char() == "=":
                 self._advance()
                 buffer += self.current_char
-                tmp_token = Token(token_types.NOT_EQUAL, buffer)
+                tmp_token = Token(token_types.NOT_EQUAL, buffer, line, column)
             else:
-                tmp_token = Token(token_types.NOT, buffer)
+                tmp_token = Token(token_types.NOT, buffer, line, column)
         if tmp_token is not None:
             self._advance()
             return tmp_token
@@ -142,7 +160,9 @@ class Lexer:
         }.get(self.current_char, None)
         
         if tmp_token_type is not None:
-            tmp_token = Token(tmp_token_type, self.current_char) 
+            tmp_token = Token(tmp_token_type, self.current_char,
+                        self.current_line, self.current_column
+                    )
             self._advance()
             return tmp_token
                      
@@ -163,6 +183,8 @@ class Lexer:
             raises LexicalError if any grammar rules are violated. 
         """
         buffer = ""
+        line = self.current_line
+        column = self.current_column
 
         # decinteger
         if self.current_char.isdigit() and self.current_char != "0":
@@ -179,7 +201,7 @@ class Lexer:
                         error_msg = f"invalid integer {buffer + '_'}\n"
                         error_msg += "integers cannot end with '_',"
                         error_msg += "'_' can only used in the middle as"
-                        error_msg += "visual separator.\n"
+                        error_msg += " visual separator.\n"
                         error_msg += "LexicalError: Invalid integer literal"
                         raise LexicalError(error_msg)
                     buffer += self.current_char
@@ -207,7 +229,7 @@ class Lexer:
             error_msg = "identifiers cannot start with a number\n"
             raise LexicalError(f"{error_msg}\nLexicalError: Invalid Identifier")
 
-        return Token(token_types.INTEGER, int(buffer))
+        return Token(token_types.INTEGER, int(buffer), line, column)
 
     def _recognise_identifier(self) -> Type[Token]:
         """recognise identifiers and keywords.
@@ -217,6 +239,8 @@ class Lexer:
         digit       ::= [0-9]
         """
         buffer = ""
+        line = self.current_line
+        column = self.current_column
         if self.current_char.isalpha() or self.current_char == "_":
             buffer += self.current_char
             self._advance()
@@ -231,8 +255,8 @@ class Lexer:
                 break
         tmp_token_type = look_up_identifier(buffer)
         if tmp_token_type is not None:
-            return Token(tmp_token_type, buffer)
-        return Token(token_types.IDENTIFIER, buffer)
+            return Token(tmp_token_type, buffer, line, column)
+        return Token(token_types.IDENTIFIER, buffer, line, column)
     
     def _recognise_string(self) -> Type[Token]:
         """recognise strings enclosed in double quotation marks.
@@ -245,6 +269,8 @@ class Lexer:
             returns STRING type token with string as value. 
         """
         buffer = ""
+        line = self.current_line
+        column = self.current_column
         if self.current_char == '"':
             self._advance()
         while self.current_char is not None:
@@ -253,7 +279,7 @@ class Lexer:
                 break
             buffer += self.current_char
             self._advance()
-        return Token(token_types.STRING, buffer)
+        return Token(token_types.STRING, buffer, line, column)
     
 if __name__ == "__main__":
     test = """let five = 5;
