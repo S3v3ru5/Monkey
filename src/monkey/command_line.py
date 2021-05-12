@@ -9,6 +9,7 @@ from monkey.ast.parser import Parser
 from monkey.evaluator.environment import Environment
 from monkey.evaluator.evaluator import m_eval
 from monkey.evaluator import mobjects
+from monkey import exceptions
 
 MONKEY_FACE = '''            __,__
    .--.  .-"     "-.  .--.
@@ -27,10 +28,10 @@ PROMPT = ">>> "
 
 def run_script(script_path):
     if not os.path.isfile(script_path):
-        print(f"ERROR: {script_path} is not a file")
+        print(f"Error: {script_path} is not a file")
         return
     if not script_path.endswith(".mon"):
-        print(f"ERROR: {script_path} is not a monkey script")
+        print(f"Error: {script_path} is not a monkey script")
         return
     with open(script_path) as f:
         src = f.read()
@@ -45,7 +46,7 @@ def run_script(script_path):
         result = m_eval(program, env)
         if not result.type() == "NULL":
             print(result)
-    except Exception as e:
+    except exceptions.MonkeyError as e:
         print(e)
         exit()
         
@@ -59,15 +60,16 @@ def repl():
     try:
         while True:
             src = input(PROMPT)
-            l = Lexer(src)
-            p = Parser(l)
-            program = p.parse()
-            if len(p.errors) > 0:
-                print(p.errors)
-                continue
-            result = m_eval(program, env)
-            if not result.type() == "NULL":
-                print(result)
+            try:
+                l = Lexer(src)
+                p = Parser(l)
+                program = p.parse()
+
+                result = m_eval(program, env)
+                if not result.type() == "NULL":
+                    print(result)
+            except (exceptions.LexicalError, exceptions.SyntaxError) as e:
+                print(e)
     except (KeyboardInterrupt, EOFError) as e:
         print()
         sys.exit(0)

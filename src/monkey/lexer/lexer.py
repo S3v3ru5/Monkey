@@ -74,7 +74,7 @@ class Lexer:
         self._skip_whitespace()
 
         if self.current_char is None:
-            return Token(token_types.EOF, "")
+            return Token(token_types.EOF, "EOF")
 
         # Literals
         if self.current_char.isdigit():

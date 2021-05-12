@@ -6,3 +6,7 @@ class MonkeyError(Exception):
 class LexicalError(MonkeyError):
     """Error class for lexical errors"""
     pass
+
+class SyntaxError(MonkeyError):
+    """Error class for syntax errors"""
+    pass

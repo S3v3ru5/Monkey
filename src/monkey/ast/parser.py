@@ -3,6 +3,7 @@
 import typing
 from types import SimpleNamespace
 
+from monkey.exceptions import SyntaxError
 from monkey.ast import ast
 from monkey.lexer.token_types import token_types as TOKEN_TYPES
 
@@ -38,6 +39,7 @@ class Parser:
     def __init__(self, lexer) -> None:
         self.lexer = lexer
         
+        self.prev_token = None
         self.current_token = None
         self.peek_token = None
 
@@ -53,6 +55,7 @@ class Parser:
 
     def _advance(self):
         """increment the parser cursor"""
+        self.prev_token = self.current_token
         self.current_token = self.peek_token
         self.peek_token = self.lexer.get_next_token()
     
@@ -71,10 +74,18 @@ class Parser:
     def _error(self, msg = None):
         """method to call to raise an error."""
         if msg is None:
-            raise Exception(f"Syntax Error: {self.current_token}")
-            # self.errors.append(f"Syntax Error {self.current_token}")
-        raise Exception("ERROR: " + msg)
-        # self.errors.append(msg)
+            msg = f"invalid syntax at or near {self.current_token.value}"
+            msg += f"\n\nSyntaxError: Invalid Syntax"
+        raise SyntaxError(msg)
+
+    def _get_error_msg(self, expected, got, previous_token = None):
+        if previous_token is None:
+            msg = f"expected a {expected}, instead got a {got}"
+        else:
+            msg = f"expected {expected} after {previous_token.value}, "
+            msg += f"instead got {got}"
+        msg += "\n\nSyntaxError: Invalid Syntax"
+        return msg
 
     def _eat(self, token_type):
         """verify current token type.
@@ -83,7 +94,11 @@ class Parser:
         the parser cursor and get next token else raise Error. 
         """
         if self.current_token.type != token_type:
-            self._error(f"expected = {token_type}, got = {self.current_token.type}")
+            msg = self._get_error_msg(token_type,
+                    self.current_token.type,
+                    self.prev_token
+                )
+            self._error(msg)
         else:
             self._advance()
 
@@ -162,7 +177,6 @@ class Parser:
         self._register_prefix(TOKEN_TYPES.MINUS, self.p_prefix_expression)
         self._register_prefix(TOKEN_TYPES.LPAREN, self.p_grouped_expression)
         self._register_prefix(TOKEN_TYPES.LBRACKET, self.p_array_literal)
-        self._register_prefix(TOKEN_TYPES.LBRACE, self.p_hash_literal)
         self._register_prefix(TOKEN_TYPES.IF, self.p_if_expression)
         self._register_prefix(TOKEN_TYPES.FUNCTION, self.p_function_literal)
 
@@ -193,7 +207,7 @@ class Parser:
         elif self._iscurrenttoken(TOKEN_TYPES.FALSE):
             value = False
         else:
-            self._error(f"Unknown boolean value {self.current_token}")
+            self._error()
             value = None
         return ast.Boolean(value)
 
@@ -205,26 +219,6 @@ class Parser:
         elements = self.p_expression_list(TOKEN_TYPES.RBRACKET)
         return ast.ArrayLiteral(elements)
     
-    def p_hash_literal(self) -> ast.HashLiteral:
-        """parse hash maps(dictionaries).
-
-        HashLiteral :: "{" <expression> ":" <expression> "," ... "}"
-        """
-        pairs = dict()
-        self._advance()
-        while self._iscurrenttoken(TOKEN_TYPES.COMMA):
-            key = self.p_expression(PRECEDENCE_ORDERS.LOWEST)
-            self._advance()
-            if not self._iscurrenttoken(TOKEN_TYPES.SEMICOLON):
-                return None
-            self._advance()
-            value = self.p_expression(PRECEDENCE_ORDERS.LOWEST)
-            self._advance()
-            pairs[key] = value
-        if not self._iscurrenttoken(TOKEN_TYPES.RBRACE):
-            return None
-        return ast.HashLiteral(pairs)
-
     def p_prefix_expression(self) -> ast.PrefixExpression:
         """parse prefix expressions(unary).
 
@@ -256,12 +250,16 @@ class Parser:
         self._advance()
 
         exp = self.p_expression(PRECEDENCE_ORDERS.LOWEST)
-        
+
         if not self._ispeektoken(TOKEN_TYPES.RPAREN):
-            return None
+            msg = self._get_error_msg(TOKEN_TYPES.RPAREN,
+                        self.peek_token.type,
+                        self.current_token
+                    )
+            self._error(msg)
         self._advance()
         return exp
-    
+
     def p_if_expression(self) -> ast.IfExpression:
         """parse an if expression.
 
@@ -274,15 +272,27 @@ class Parser:
         """
         self._advance()
         if not self._iscurrenttoken(TOKEN_TYPES.LPAREN):
-            return None
+            msg = self._get_error_msg(TOKEN_TYPES.LPAREN,
+                        self.current_token.type,
+                        self.prev_token
+                    )
+            self._error(msg)
         self._advance()
         condition = self.p_expression(PRECEDENCE_ORDERS.LOWEST)
-        
+
         if not self._ispeektoken(TOKEN_TYPES.RPAREN):
-            return None
+            msg = self._get_error_msg(TOKEN_TYPES.RPAREN,
+                        self.peek_token.type,
+                        self.current_token
+                    )
+            self._error(msg)
         self._advance()
         if not self._ispeektoken(TOKEN_TYPES.LBRACE):
-            return None
+            msg = self._get_error_msg(TOKEN_TYPES.LBRACE,
+                        self.peek_token.type,
+                        self.current_token.value
+                    )
+            self._error(msg)
         self._advance()
 
         consequence = self.p_block_statement()
@@ -290,7 +300,11 @@ class Parser:
         if self._ispeektoken(TOKEN_TYPES.ELSE):
             self._advance()
             if not self._ispeektoken(TOKEN_TYPES.LBRACE):
-                return None
+                msg = self._get_error_msg(TOKEN_TYPES.LBRACE,
+                            self.peek_token.type,
+                            self.current_token.value
+                        )
+                self._error(msg)
             self._advance()
             alternative = self.p_block_statement()
         else:
@@ -307,7 +321,11 @@ class Parser:
         index = self.p_expression(PRECEDENCE_ORDERS.LOWEST)
         self._advance()
         if not self._iscurrenttoken(TOKEN_TYPES.RBRACKET):
-            self._error("Index expression is not closed")
+            msg = self._get_error_msg(TOKEN_TYPES.RBRACKET,
+                        self.current_token.type,
+                        self.prev_token
+                    )
+            self._error(msg)
         return ast.IndexExpression(left, index)
 
     def p_expression_list(self, end_marker):
@@ -325,7 +343,11 @@ class Parser:
             self._advance()
             args.append(expression)
         if not self._iscurrenttoken(end_marker):
-            self._error(f"expression is not closed by {end_marker}")
+            msg = self._get_error_msg(end_marker,
+                        self.current_token.type,
+                        self.prev_token
+                    )
+            self._error(msg)
         return args
 
     def p_call_arguments(self):
@@ -370,12 +392,20 @@ class Parser:
         """
         self._advance()
         if not self._iscurrenttoken(TOKEN_TYPES.LPAREN):
-            return None
+            msg = self._get_error_msg(TOKEN_TYPES.LPAREN,
+                        self.current_token.type,
+                        self.prev_token
+                    )
+            self._error(msg)
         
         parameters = self.p_function_parameters()
         if not self._iscurrenttoken(TOKEN_TYPES.LBRACE):
-            return None
-        
+            msg = self._get_error_msg(TOKEN_TYPES.LBRACE,
+                        self.current_token.type,
+                        self.prev_token
+                    )
+            self._error(msg)
+
         body = self.p_block_statement()
 
         return ast.FunctionLiteral(parameters, body)
@@ -398,14 +428,14 @@ class Parser:
         """parse an expression."""
         prefix_func = self.prefix_funcs.get(self.current_token.type)
         if prefix_func is None:
-            self._error(f"No prefix function for {self.current_token.type}")
+            self._error()
             return None
         left_exp = prefix_func()
        
         while not self._ispeektoken(TOKEN_TYPES.SEMICOLON) and precedence < self._peek_precedence():
             infix_func = self.infix_funcs.get(self.peek_token.type)
             if infix_func is None:
-                self._error(f"No infix function for {self.peek_token.type}")
+                self._error()
                 return left_exp
             self._advance()
             left_exp = infix_func(left_exp)
@@ -417,8 +447,9 @@ class Parser:
         program = ast.Program()
         while not self._iscurrenttoken(TOKEN_TYPES.EOF):
             stmt = self.p_statement()
-            if not stmt is None:
-                program.statements.append(stmt)
+            if stmt is None:
+                self._error()
+            program.statements.append(stmt)
         return program
     
 
