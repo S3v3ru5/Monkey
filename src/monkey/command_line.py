@@ -53,7 +53,7 @@ def run_script(script_path):
 
 def repl():
     print(MONKEY_FACE)
-    print("Monkey v0.0 ", end="")
+    print("Monkey v0.1 ", end="")
     print(datetime.now().strftime("(%b %d %Y, %I:%M:%S %p)"))
     print("[Host-> Python] on linux")
     env = Environment()
