@@ -4,7 +4,7 @@ from typing import List, Type
 
 from monkey.exceptions import LexicalError
 from monkey.lexer.token import Token
-from monkey.lexer.token_types import token_types, look_up_identifier
+from monkey.lexer.token_types import TOKEN_TYPES, look_up_identifier
 
 class Lexer:
     """A class for lexical analysis"""
@@ -63,7 +63,7 @@ class Lexer:
         """
         tokens = []
         token = self.get_next_token()
-        while token.type != token_types.EOF:
+        while token.type != TOKEN_TYPES.EOF:
             tokens.append(token)
             token = self.get_next_token()
         tokens.append(token)
@@ -80,7 +80,7 @@ class Lexer:
         self._skip_whitespace()
 
         if self.current_char is None:
-            return Token(token_types.EOF, "EOF", self.current_line, self.current_column)
+            return Token(TOKEN_TYPES.EOF, "EOF", self.current_line, self.current_column)
 
         # Literals
         if self.current_char.isdigit():
@@ -93,13 +93,13 @@ class Lexer:
         # Arthimetic Operators
         tmp_token_type = None
         if self.current_char == "+":
-            tmp_token_type = token_types.PLUS
+            tmp_token_type = TOKEN_TYPES.PLUS
         elif self.current_char == "-":
-            tmp_token_type = token_types.MINUS
+            tmp_token_type = TOKEN_TYPES.MINUS
         elif self.current_char == "*":
-            tmp_token_type = token_types.MUL
+            tmp_token_type = TOKEN_TYPES.MUL
         elif self.current_char == "/":
-            tmp_token_type = token_types.DIV
+            tmp_token_type = TOKEN_TYPES.DIV
         
         if tmp_token_type is not None:
             operator = self.current_char
@@ -117,20 +117,20 @@ class Lexer:
             if self._peek_char() == "=":
                 self._advance()
                 buffer += self.current_char
-                tmp_token = Token(token_types.EQUAL, buffer, line, column)
+                tmp_token = Token(TOKEN_TYPES.EQUAL, buffer, line, column)
             else:
-                tmp_token = Token(token_types.ASSIGN, buffer, line, column)
+                tmp_token = Token(TOKEN_TYPES.ASSIGN, buffer, line, column)
             self._advance()
             return tmp_token
 
         # Comparison operators
         tmp_token = None
         if self.current_char == "<":
-            tmp_token = Token(token_types.LESSTHAN, self.current_char,
+            tmp_token = Token(TOKEN_TYPES.LESSTHAN, self.current_char,
                         self.current_line, self.current_column
                     )
         elif self.current_char == ">":
-            tmp_token = Token(token_types.GREATERTHAN, self.current_char,
+            tmp_token = Token(TOKEN_TYPES.GREATERTHAN, self.current_char,
                         self.current_line, self.current_column
                     )
         elif self.current_char == "!":
@@ -140,23 +140,23 @@ class Lexer:
             if self._peek_char() == "=":
                 self._advance()
                 buffer += self.current_char
-                tmp_token = Token(token_types.NOT_EQUAL, buffer, line, column)
+                tmp_token = Token(TOKEN_TYPES.NOT_EQUAL, buffer, line, column)
             else:
-                tmp_token = Token(token_types.NOT, buffer, line, column)
+                tmp_token = Token(TOKEN_TYPES.NOT, buffer, line, column)
         if tmp_token is not None:
             self._advance()
             return tmp_token
         
         # Delimeters
         tmp_token_type = {
-            "(": token_types.LPAREN,
-            ")": token_types.RPAREN,
-            "[": token_types.LBRACKET,
-            "]": token_types.RBRACKET,
-            "{": token_types.LBRACE,
-            "}": token_types.RBRACE,
-            ",": token_types.COMMA,
-            ";": token_types.SEMICOLON,
+            "(": TOKEN_TYPES.LPAREN,
+            ")": TOKEN_TYPES.RPAREN,
+            "[": TOKEN_TYPES.LBRACKET,
+            "]": TOKEN_TYPES.RBRACKET,
+            "{": TOKEN_TYPES.LBRACE,
+            "}": TOKEN_TYPES.RBRACE,
+            ",": TOKEN_TYPES.COMMA,
+            ";": TOKEN_TYPES.SEMICOLON,
         }.get(self.current_char, None)
         
         if tmp_token_type is not None:
@@ -229,7 +229,7 @@ class Lexer:
             error_msg = "identifiers cannot start with a number\n"
             raise LexicalError(f"{error_msg}\nLexicalError: Invalid Identifier")
 
-        return Token(token_types.INTEGER, int(buffer), line, column)
+        return Token(TOKEN_TYPES.INTEGER, int(buffer), line, column)
 
     def _recognise_identifier(self) -> Type[Token]:
         """recognise identifiers and keywords.
@@ -256,7 +256,7 @@ class Lexer:
         tmp_token_type = look_up_identifier(buffer)
         if tmp_token_type is not None:
             return Token(tmp_token_type, buffer, line, column)
-        return Token(token_types.IDENTIFIER, buffer, line, column)
+        return Token(TOKEN_TYPES.IDENTIFIER, buffer, line, column)
     
     def _recognise_string(self) -> Type[Token]:
         """recognise strings enclosed in double quotation marks.
@@ -279,7 +279,7 @@ class Lexer:
                 break
             buffer += self.current_char
             self._advance()
-        return Token(token_types.STRING, buffer, line, column)
+        return Token(TOKEN_TYPES.STRING, buffer, line, column)
     
 if __name__ == "__main__":
     test = """let five = 5;
@@ -293,7 +293,7 @@ if __name__ == "__main__":
     l = Lexer(test)
     while True:
         token = l.get_next_token()
-        if token.type == token_types.EOF:
+        if token.type == TOKEN_TYPES.EOF:
             print(token)
             break
         print(token)

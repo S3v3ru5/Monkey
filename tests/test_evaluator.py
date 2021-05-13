@@ -134,7 +134,6 @@ def test_errors():
     for src, target in test_cases:
         result = run_eval(src)
         assert isinstance(result, mobjects.Error)
-        # assert result.msg == target
 
 def test_let_statements():
     test_cases = [

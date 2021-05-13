@@ -5,7 +5,7 @@ from types import SimpleNamespace
 
 from monkey.exceptions import SyntaxError
 from monkey.ast import ast
-from monkey.lexer.token_types import token_types as TOKEN_TYPES
+from monkey.lexer.token_types import TOKEN_TYPES
 
 PRECEDENCE_ORDERS = {
     "LOWEST": 1,
