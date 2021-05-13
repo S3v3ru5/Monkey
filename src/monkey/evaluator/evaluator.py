@@ -193,6 +193,22 @@ def m_eval_if_expression(node: ast.IfExpression, env: Environment) -> mobjects.O
         return m_eval(node.alternative, env)
     return NULL
 
+def m_eval_while_expression(node: ast.WhileExpression, env: Environment) -> mobjects.Object:
+    """evaluate while expression.
+    
+    evaluate while body repeatedly until the condition is "false" or
+    a return statement is evaluated.
+    """
+    result = NULL
+    while True:
+        condition = m_eval(node.condition, env)
+        if not m_is_true(condition):
+            return result
+        result = m_eval_block_statement(node.body, env)
+        if (m_is_type(result, mobjects.RETURN_VALUE_OBJ)
+            or m_is_type(result, mobjects.ERROR_OBJ)):
+            return result
+
 def m_eval_array_index(left: mobjects.Array, index: mobjects.Integer) -> mobjects.Object:
     index = index.value
     if index < 0:
@@ -389,4 +405,6 @@ def m_eval(node: ast.Node, env: Environment) -> mobjects.Object:
         return construct_boolean(node.value)
     elif isinstance(node, ast.StringLiteral):
         return mobjects.String(value=node.value)
+    elif isinstance(node, ast.WhileExpression):
+        return m_eval_while_expression(node, env)
     return NULL

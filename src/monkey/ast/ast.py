@@ -85,6 +85,12 @@ class IfExpression(Expression):
         self.consequence = consequence
         self.alternative = alternative
 
+class WhileExpression(Expression):
+    node_type: str = "WhileExpression"
+    def __init__(self, condition, body) -> None:
+        self.condition = condition
+        self.body = body
+
 class IndexExpression(Expression):
     node_type: str = "IndexExpression"
     def __init__(self, left, index):

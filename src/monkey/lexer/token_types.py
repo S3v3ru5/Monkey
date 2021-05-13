@@ -12,6 +12,7 @@ token_types = {
     "IF"        : "if",
     "ELSE"      : "else",
     "RETURN"    : "return",
+    "WHILE"     : "while",
 
     # Arthimetic Operators
     "PLUS"  : "+",
@@ -71,5 +72,6 @@ def look_up_identifier(identifier: str) -> Optional[str]:
         "if"        : TOKEN_TYPES.IF,
         "else"      : TOKEN_TYPES.ELSE,
         "return"    : TOKEN_TYPES.RETURN,
+        "while"     : TOKEN_TYPES.WHILE,
     }
     return keywords.get(identifier, None)

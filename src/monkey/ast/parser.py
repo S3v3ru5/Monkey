@@ -184,6 +184,7 @@ class Parser:
         self._register_prefix(TOKEN_TYPES.LBRACKET, self.p_array_literal)
         self._register_prefix(TOKEN_TYPES.IF, self.p_if_expression)
         self._register_prefix(TOKEN_TYPES.FUNCTION, self.p_function_literal)
+        self._register_prefix(TOKEN_TYPES.WHILE, self.p_while_expression)
 
     def _register_infixes(self) -> None:
         self._register_infix(TOKEN_TYPES.PLUS, self.p_infix_expression)
@@ -326,6 +327,49 @@ class Parser:
             alternative = None
         
         return ast.IfExpression(condition, consequence, alternative)
+
+    def p_while_expression(self) -> ast.WhileExpression:
+        """parse an whiile expression.
+
+        condition :: "(" <expression> ")"
+        BlockStatement :: "{" <statement>* "}"
+        body :: BlockStatement
+        WhileExpression :: while <condition> <body>
+        """
+        self._advance()
+        if not self._iscurrenttoken(TOKEN_TYPES.LPAREN):
+            msg = self._get_error_msg(TOKEN_TYPES.LPAREN,
+                        self.current_token.type,
+                        self.current_token.line,
+                        self.current_token.column,
+                        self.prev_token
+                    )
+            self._error(msg)
+        self._advance()
+        condition = self.p_expression(PRECEDENCE_ORDERS.LOWEST)
+
+        if not self._ispeektoken(TOKEN_TYPES.RPAREN):
+            msg = self._get_error_msg(TOKEN_TYPES.RPAREN,
+                        self.peek_token.type,
+                        self.peek_token.line,
+                        self.peek_token.column,
+                        self.current_token
+                    )
+            self._error(msg)
+        self._advance()
+        if not self._ispeektoken(TOKEN_TYPES.LBRACE):
+            msg = self._get_error_msg(TOKEN_TYPES.LBRACE,
+                        self.peek_token.type,
+                        self.peek_token.line,
+                        self.peek_token.column,
+                        self.current_token.value
+                    )
+            self._error(msg)
+        self._advance()
+        
+        body = self.p_block_statement()
+
+        return ast.WhileExpression(condition, body)
 
     def p_index_expression(self, left) -> ast.IndexExpression:
         """parse an index expression.

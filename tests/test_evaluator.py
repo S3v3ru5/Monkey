@@ -112,6 +112,39 @@ def test_if_expression():
         else:
             assert_integer(result, target)
 
+def test_while_expression():
+    test_cases = [
+        ("""
+        let a = 0;
+        let res = 1;
+        while (a < 5) {
+            let res = res * 2;
+            let a = a + 1;
+        }
+        res;
+        """, 2**5),
+        ("""
+        let f = fn(a) {
+            let i = 1;
+            let res = 0;
+            while (true) {
+                let res = res + i;
+                if (i == a) {
+                    return res;
+                }
+                let i = i + 1;
+            }
+        }
+        f(10);
+        """, 10*(10 + 1)//2)
+    ]
+    for src, target in test_cases:
+        result = run_eval(src)
+        if target is None:
+            assert_null(result)
+        else:
+            assert_integer(result, target)
+
 def test_return_statement():
     test_cases = [
         ("return 1;", 1),
